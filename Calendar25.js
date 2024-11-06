@@ -1,25 +1,25 @@
 function myFunction() {
 
-  // Main function to update the calendar sheet
+  // Funzione principale per aggiornare il foglio del calendario
   function updateCalendarSheet() {
-    var calendarId = '1312'; // Calendar ID
-    var sheetId = '1312'; // Sheet ID
-    var sheet = SpreadsheetApp.openById(sheetId).getSheetByName('S1312');
+    var calendarId = '1312'; // ID del calendario
+    var sheetId = '1312'; // ID del foglio
+    var sheet = SpreadsheetApp.openById(sheetId).getSheetByName('1312');
     
-    // Extract events from Google Calendar
-    var now = new Date(2024, 8, 1);  // Start date
-    var future = new Date(2025, 11, 31);  // End date
+    // Estrai gli eventi da Google Calendar
+    var now = new Date(2024, 8, 1);  // Data di inizio
+    var future = new Date(2025, 11, 31);  // Data di fine
     var events = CalendarApp.getCalendarById(calendarId).getEvents(now, future);
     
-    // Process events to extract data
+    // Processa gli eventi per ottenere i dati
     var eventData = [];
-    var totalHours = 0; // Total hours for the year
-    var monthlyHours = {}; // Hours per month
+    var totalHours = 0; // Ore totali per l'anno
+    var monthlyHours = {}; // Ore per mese
     for (var i = 0; i < events.length; i++) {
       var event = events[i];
       var start = event.getStartTime();
       var end = event.getEndTime();
-      var duration = (end - start) / (1000 * 60 * 60);  // Duration in hours
+      var duration = (end - start) / (1000 * 60 * 60);  // Durata in ore
 
       eventData.push([ 
         event.getTitle(),
@@ -29,17 +29,17 @@ function myFunction() {
         duration
       ]);
 
-      // Add total and monthly hours
+      // Aggiungi ore totali e mensili
       totalHours += duration;
       var month = Utilities.formatDate(start, Session.getScriptTimeZone(), 'MMMM');
       monthlyHours[month] = (monthlyHours[month] || 0) + duration;
     }
 
-    // Clear existing data and formatting from the sheet
+    // Pulisci dati e formattazioni esistenti nel foglio
     sheet.clear();
     sheet.clearFormats();
 
-    // Insert event table
+    // Inserisci tabella degli eventi
     sheet.getRange('B2:F2').setValues([['Event Name', 'Date', 'Start Time', 'End Time', 'Hours']]);
     sheet.getRange(3, 2, eventData.length, eventData[0].length).setValues(eventData);
     sheet.getRange(2, 2, eventData.length + 1, eventData[0].length)
@@ -50,7 +50,7 @@ function myFunction() {
       .setBorder(true, true, true, true, true, true)
       .setBackground('#ea9999');
 
-    // Insert annual summary table
+    // Inserisci tabella di riepilogo annuale
     sheet.getRange('H3:I3').setValues([['Total Hours', 'Total Euro']])
       .setFontWeight('bold')
       .setBackground('#93c47d')
@@ -62,95 +62,103 @@ function myFunction() {
       .setBackground('#b6d7a8')
       .setBorder(true, true, true, true, true, true);
 
-    // Insert monthly summary table
-    sheet.getRange('K3:M3').setValues([['Month', 'Hours', 'Euro']])
+    // Inserisci tabella di riepilogo mensile
+    sheet.getRange('H10:J10').setValues([['Month', 'Hours', 'Euro']])
       .setFontWeight('bold')
       .setBackground('#b4a7d6')
       .setBorder(true, true, true, true, true, true);
 
-    // Prepare monthly data for insertion
+    // Prepara i dati mensili per l'inserimento
     var monthData = [];
     for (var month in monthlyHours) {
-      var monthTotal = monthlyHours[month];  // Total hours for the month
-      var monthEuro = monthTotal * 17;  // Calculate Euro
-      monthData.push([month, monthTotal, monthEuro]);  // Add hours and Euro to the array
+      var monthTotal = monthlyHours[month];  // Ore totali per il mese
+      var monthEuro = monthTotal * 17;  // Calcolo Euro
+      monthData.push([month, monthTotal, monthEuro]);  // Aggiunge ore e Euro all'array
     }
 
-    // Insert monthly data
+    // Inserisci dati mensili
     if (monthData.length > 0) {
-      sheet.getRange(4, 11, monthData.length, 3).setValues(monthData);
-      sheet.getRange(4, 11, monthData.length, 3)
+      sheet.getRange(11, 8, monthData.length, 3).setValues(monthData);
+      sheet.getRange(11, 8, monthData.length, 3)
         .setBorder(true, true, true, true, true, true)
         .setBackground('#d9d2e9');
     }
 
-    // Format text to be centered
+    // Formattazione testo allineato al centro
     sheet.getRange(2, 2, sheet.getMaxRows() - 1, sheet.getMaxColumns() - 1)
       .setHorizontalAlignment('center')
       .setVerticalAlignment('middle');
 
-    // Set the font for the entire sheet
+    // Imposta il font per l'intero foglio
     sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns())
       .setFontFamily('Arial')
       .setFontSize(10);
 
-    // Call the function to adjust the column widths
+    // Richiama la funzione per regolare la larghezza delle colonne
     adjustSpecificColumnWidths(sheet);
 
-    // Create the monthly hours chart
-    createMonthlyHoursChart(sheet); // Pass the sheet to the chart function
+    // Crea il grafico mensile
+    createMonthlyHoursChart(sheet); // Passa il foglio alla funzione del grafico
   }
 
-  // Function to create a bar chart for monthly hours
+  // Funzione per creare un grafico a barre delle ore mensili
   function createMonthlyHoursChart(sheet) {
-    // Remove any existing charts in the chosen position
+    // Rimuovi eventuali grafici esistenti nella posizione scelta
     var existingCharts = sheet.getCharts();
     existingCharts.forEach(function(chart) {
       sheet.removeChart(chart);
     });
 
-    // Create a new bar chart for monthly hours
-    var chartBuilder = sheet.newChart()
-      .setChartType(Charts.ChartType.COLUMN)  // Use a column chart
-      .addRange(sheet.getRange("K4:K"))  // Range for months (X-axis)
-      .addRange(sheet.getRange("L4:L"))  // Range for hours (Y-axis)
-      .setPosition(10, 8, -75, 0)  // Position of the chart
-      .setOption('title', 'Monthly Hours')  // Chart title
-      .setOption('hAxis', { title: 'Month', textStyle: { color: '#1c4587', fontSize: 12 } })  // Horizontal axis (months)
-      .setOption('vAxis', { title: 'Hours', textStyle: { color: '#1c4587', fontSize: 12 } })  // Vertical axis (hours)
-      .setOption('width', 350)  // Chart width
-      .setOption('height', 250)  // Chart height
-      .setOption('colors', ['#6aa84f'])  // Column color
-      .setOption('legend', { position: 'none' })  // Hide legend
-      .setOption('titleTextStyle', { color: '#0b5394', fontSize: 14, bold: true });  // Title style
+    // Crea un nuovo grafico a barre per le ore mensili
+var chartBuilder = sheet.newChart()
+  .setChartType(Charts.ChartType.COLUMN)  // Usa un grafico a colonne
+  .addRange(sheet.getRange("H11:H"))  // Intervallo per i mesi (asse X)
+  .addRange(sheet.getRange("I11:I"))  // Intervallo per le ore (asse Y)
+  .setPosition(3, 12, -50, 0)  // Posizione del grafico
+  .setOption('title', 'Monthly Hours')  // Titolo del grafico
+  .setOption('hAxis', { title: '', textStyle: { color: '#1c4587', fontSize: 12 } })  // Asse orizzontale (mesi)
+  .setOption('vAxis', { title: '', textStyle: { color: '#1c4587', fontSize: 12 } })  // Asse verticale (ore)
+  .setOption('width', 400)  // Larghezza del grafico
+  .setOption('height', 300)  // Altezza del grafico
+  .setOption('colors', ['#6aa84f'])  // Colore delle colonne
+  .setOption('legend', { position: 'none' })  // Nasconde la legenda
+  .setOption('titleTextStyle', { color: '#0b5394', fontSize: 14, bold: true });  // Stile del titolo
 
-    sheet.insertChart(chartBuilder.build());
+sheet.insertChart(chartBuilder.build());
 
-    // Insert the chart into the sheet
+    // Inserisce il grafico nel foglio
     sheet.insertChart(chartBuilder.build());
   }
 
-  // Function to adjust specific column widths
-  function adjustSpecificColumnWidths(sheet) {
-    // Array of columns to adjust: B=2, C=3, D=4, E=5, F=6, H=8, I=9, K=11, L=12, M=13
-    var columnsToAdjust = [2, 3, 4, 5, 6, 8, 9, 11, 12, 13];
+// Funzione per regolare le larghezze delle colonne
+function adjustSpecificColumnWidths(sheet) {
+  // Array di colonne da regolare: B=2, C=3, D=4, E=5, F=6, H=8, I=9
+  var columnsToAdjust = [2, 3, 4, 5, 6, 8, 9];
 
-    // Loop through the specified columns
-    columnsToAdjust.forEach(function(col) {
-      // Auto resize the column
-      sheet.autoResizeColumn(col);
+  // Ciclo attraverso le colonne specificate (escludendo K, L, M)
+  columnsToAdjust.forEach(function(col) {
+    // Auto resize della colonna
+    sheet.autoResizeColumn(col);
 
-      // Get the current width of the column
-      var currentWidth = sheet.getColumnWidth(col);
+    // Ottieni la larghezza corrente della colonna
+    var currentWidth = sheet.getColumnWidth(col);
 
-      // Increase the width by 50%
-      var newWidth = currentWidth * 1.5;
+    // Aumenta la larghezza del 50%
+    var newWidth = currentWidth * 1.5;
 
-      // Set the new width for the column
-      sheet.setColumnWidth(col, newWidth);
-    });
-  }
+    // Imposta la nuova larghezza per la colonna
+    sheet.setColumnWidth(col, newWidth);
+  });
 
-  // Run the main function to update the sheet
+  // Imposta larghezza fissa per le colonne K, L, M
+  sheet.setColumnWidth(1, 50);  // Colonna M (imposta larghezza fissa)
+  sheet.setColumnWidth(7, 50);  // Colonna M (imposta larghezza fissa)
+  sheet.setColumnWidth(11, 100);  // Colonna K (imposta larghezza fissa)
+  sheet.setColumnWidth(12, 100);  // Colonna L (imposta larghezza fissa)
+  sheet.setColumnWidth(13, 100);  // Colonna M (imposta larghezza fissa)
+}
+
+
+  // Esegui la funzione principale per aggiornare il foglio
   updateCalendarSheet();
 }
