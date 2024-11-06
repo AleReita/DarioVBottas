@@ -1,6 +1,5 @@
-# DarioVBottas
- Just a calendar
+Presenting: Just a Calendar!
 
-Here i'm trying to create a calendar for my private teaching job (yes i'm poor), with the help of Google Calendar for the events data, Google Spreadsheets, and AppsScript for making them communicate and develop a possibly intuitive visual summary.
+Here I’m attempting to create a calendar to tackle the challenge of organizing my private teaching job (yes, I’m poor). I’ll be using Google Calendar for event data, Google Spreadsheets for organizing, and Apps Script to make everything talk to each other and hopefully come up with a nice, intuitive visual summary.
 
-I'm extremely new so every advice is appreciated, thanks for reading!
+I’m super new to all of this, so any advice or tips are greatly appreciated! Thanks for readi
